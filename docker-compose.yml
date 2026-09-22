@@ -1,0 +1,79 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: jobparser
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.10
+    restart: unless-stopped
+    environment:
+      MEILI_MASTER_KEY: masterKeyChangeMe
+      MEILI_NO_ANALYTICS: "true"
+    ports:
+      - "7700:7700"
+    volumes:
+      - meili_data:/meili_data
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        CMD_PATH: ./cmd/api
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - postgres
+      - meilisearch
+    ports:
+      - "8080:8080"
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        CMD_PATH: ./cmd/worker
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - postgres
+      - redis
+      - meilisearch
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        CMD_PATH: ./cmd/bot
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - postgres
+      - meilisearch
+
+volumes:
+  pg_data:
+  meili_data:
