@@ -39,8 +39,7 @@ func (s *SearchEngine) EnsureIndex() error {
 // IndexVacancy добавляет/обновляет вакансию в поисковом индексе
 func (s *SearchEngine) IndexVacancy(v *models.Vacancy) error {
 	idx := s.client.Index(indexName)
-	// Передаем "" (пустую строку) или "id" вместо nil
-	_, err := idx.AddDocuments([]models.Vacancy{*v}, "")
+	_, err := idx.AddDocuments([]models.Vacancy{*v})
 	return err
 }
 
@@ -50,8 +49,7 @@ func (s *SearchEngine) IndexVacancies(vs []models.Vacancy) error {
 		return nil
 	}
 	idx := s.client.Index(indexName)
-	// Передаем "" (пустую строку) или "id" вместо nil
-	_, err := idx.AddDocuments(vs, "")
+	_, err := idx.AddDocuments(vs)
 	return err
 }
 
